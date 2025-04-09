@@ -716,52 +716,44 @@ qr_encode_opts (
       if (x >= 0 && x < w && y >= 0 && y < w)
          grid[gridxy (x, y)] = (v | QR_TAG_SET);
    }
-   inline void black (int x, int y)
-   {
-      set (x, y, 1 + QR_TAG_FIXED);     // 2 is marking fixed marks
-   }
-   inline void white (int x, int y)
-   {
-      set (x, y, 0 + QR_TAG_FIXED);     // 2 is marking fixed marks
-   }
    // Corners
    void target (int x, int y)
    {
       for (n = -1; n < 8; n++)
       {
-         white (x + n, y - 1);
-         white (x + n, y + 7);
+         set (x + n, y - 1, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + n, y + 7, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 0; n < 7; n++)
       {
-         white (x - 1, y + n);
-         white (x + 7, y + n);
+         set (x - 1, y + n, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + 7, y + n, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 0; n < 7; n++)
       {
-         black (x + n, y + 0);
-         black (x + n, y + 6);
+         set (x + n, y + 0, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + n, y + 6, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 1; n < 6; n++)
       {
-         black (x + 0, y + n);
-         black (x + 6, y + n);
+         set (x + 0, y + n, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + 6, y + n, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 1; n < 6; n++)
       {
-         white (x + 1, y + n);
-         white (x + 5, y + n);
+         set (x + 1, y + n, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + 5, y + n, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 2; n < 5; n++)
       {
-         white (x + n, y + 1);
-         white (x + n, y + 5);
+         set (x + n, y + 1, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + n, y + 5, 0 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
       for (n = 2; n < 5; n++)
       {
-         black (x + 2, y + n);
-         black (x + 3, y + n);
-         black (x + 4, y + n);
+         set (x + 2, y + n, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + 3, y + n, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
+         set (x + 4, y + n, 1 + QR_TAG_FIXED + QR_TAG_TARGET);
       }
    }
    target (0, 0);
@@ -770,13 +762,13 @@ qr_encode_opts (
    // Timing
    for (n = 8; n < w - 8; n += 2)
    {
-      black (n, 6);
-      black (6, n);
+      set (n, 6, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
+      set (6, n, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
    }
    for (n = 9; n < w - 8; n += 2)
    {
-      white (n, 6);
-      white (6, n);
+      set (n, 6, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
+      set (6, n, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
    }
    // Alignment pattern
    if (o.ver > 1)
@@ -797,19 +789,19 @@ qr_encode_opts (
             {
                for (n = -2; n <= 2; n++)
                {
-                  black (x + n, y - 2);
-                  black (x + n, y + 2);
+                  set (x + n, y - 2, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
+                  set (x + n, y + 2, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
                }
                for (n = -1; n <= 1; n++)
                {
-                  black (x - 2, y + n);
-                  black (x + 2, y + n);
-                  white (x - 1, y + n);
-                  white (x + 1, y + n);
+                  set (x - 2, y + n, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
+                  set (x + 2, y + n, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
+                  set (x - 1, y + n, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
+                  set (x + 1, y + n, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
                }
-               white (x, y - 1);
-               white (x, y + 1);
-               black (x, y);
+               set (x, y - 1, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
+               set (x, y + 1, 0 + QR_TAG_FIXED + QR_TAG_ALIGN);
+               set (x, y, 1 + QR_TAG_FIXED + QR_TAG_ALIGN);
             }
             if (y == 6)
                y = w - 7 - (pn - 2) * ps;
@@ -822,7 +814,7 @@ qr_encode_opts (
             x += ps;
       }
    }
-   black (8, w - 8);
+   set (8, w - 8, 1 + QR_TAG_FIXED);
    void setfcode (int mask)
    {                            // Format info
       unsigned int fcode = (((ecl ^ 1) << 3) + (mask & 7));

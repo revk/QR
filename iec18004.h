@@ -13,6 +13,8 @@ enum {                          // Error Correction Level
 #define	QR_TAG_DATA	4       // Value is data of some sort (including ECC and padding)
 #define	QR_TAG_ECC	8       // Value is ECC data
 #define	QR_TAG_PAD	16      // Value is padding data
+#define	QR_TAG_TARGET	32      // Value is target
+#define	QR_TAG_ALIGN	64      // Value is alignment or timing
 #define	QR_TAG_SET	128     // Value is defined (otherwise is quiet)
 
 typedef struct {
