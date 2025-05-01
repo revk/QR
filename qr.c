@@ -107,6 +107,7 @@ main (int argc, const char *argv[])
    int minsize = 0;
    int overlayrepeat = 0;
    int randompad = 0;
+   int round = 0;
    double scale = -1,
       dpi = -1;
    int S = -1;
@@ -163,6 +164,7 @@ main (int argc, const char *argv[])
       {"left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left"},
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
+      {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
       POPT_AUTOHELP {
@@ -515,7 +517,7 @@ main (int argc, const char *argv[])
       break;
    case 'a':                   // half-height text
       {
-         const char *blocks[4] = {" ", "▀", "▄", "█"};
+         const char *blocks[4] = { " ", "▀", "▄", "█" };
          const unsigned char invert = (*format == 'A') ? 0 : 1;
          int y;
          for (y = 0; y < H * S; y += 2)
@@ -526,7 +528,7 @@ main (int argc, const char *argv[])
             {
                unsigned int top = grid[W * (y / S) + (x / S)] & 1;
                unsigned int bottom = has_bottom ? (grid[W * ((y + 1) / S) + (x / S)] & 1) : 0;
-               printf ("%s", blocks[(top  ^ invert) | ((bottom ^ invert) << 1)]);
+               printf ("%s", blocks[(top ^ invert) | ((bottom ^ invert) << 1)]);
             }
             printf ("\n");
          }
@@ -554,9 +556,8 @@ main (int argc, const char *argv[])
                unsigned int bottom_left = has_bottom ? (grid[W * ((y + 1) / S) + (x / S)] & 1) : 0;
                unsigned int bottom_right = (has_bottom && has_right) ? (grid[W * ((y + 1) / S) + ((x + 1) / S)] & 1) : 0;
                printf ("%s", blocks[(top_left ^ invert)
-                  | ((top_right ^ invert) << 1)
-                  | ((bottom_left ^ invert) << 2)
-                  | ((bottom_right ^ invert) << 3)]);
+                                    | ((top_right ^ invert) << 1)
+                                    | ((bottom_left ^ invert) << 2) | ((bottom_right ^ invert) << 3)]);
             }
             printf ("\n");
          }
@@ -595,21 +596,37 @@ main (int argc, const char *argv[])
       break;
    case 'v':                   // svg
       {
-         int x,
-           y;
-         Image *i;
-         i = ImageNew (W, H, 2);
-         i->Colour[0] = lightcolour;
-         i->Colour[1] = darkcolour;
-         for (y = 0; y < H; y++)
-            for (x = 0; x < W; x++)
-               if (grid[y * W + x] & 1)
-                  ImagePixel (i, x, y) = 1;
-         if (isupper (*format))
-            ImageSVGPath (i, stdout, 1);
-         else
-            ImageWriteSVG (i, stdout, 0, -1, barcode, scale);
-         ImageFree (i);
+         if (round)
+         {                      // Non standard
+            printf
+               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
+                W, H, W, H);
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (grid[y * W + x] & QR_TAG_BLACK)
+                  {
+                     if (grid[y * W + x] & QR_TAG_TARGET)
+                        printf ("<rect x=\"%d\" y=\"%d\" width=\"1\" height=\"1\"/>", x, y);
+                     else
+                        printf ("<circle cx=\"%d.5\" cy=\"%d.5\" r=\"0.5\"/>", x, y);
+                  }
+            printf ("</g></svg>");
+         } else
+         {
+            Image *i;
+            i = ImageNew (W, H, 2);
+            i->Colour[0] = lightcolour;
+            i->Colour[1] = darkcolour;
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (grid[y * W + x] & 1)
+                     ImagePixel (i, x, y) = 1;
+            if (isupper (*format))
+               ImageSVGPath (i, stdout, 1);
+            else
+               ImageWriteSVG (i, stdout, 0, -1, barcode, scale);
+            ImageFree (i);
+         }
       }
       break;
    case 'd':                   // png data
