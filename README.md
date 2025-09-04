@@ -11,7 +11,7 @@ The library allows custom padding in the QR code, for "hidden" data, but also pr
 
 It includes a couple of non standard formats, cicles instead of squares, and even a truchet version. Mostly these read.
 
-<img width="990" height="990" alt="qr" src="https://github.com/user-attachments/assets/8ffc4fe8-541d-4488-add0-dcb1f4a7afe8" />
+<img width="1230" height="1230" alt="qr90" src="https://github.com/user-attachments/assets/de18d490-f3de-4031-8a71-d8bb4daa326e" />
 
 There is even a coloured PNG format to allow you to see what parts are data, ecc, padding, control, etc.
 
