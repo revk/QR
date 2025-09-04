@@ -625,8 +625,8 @@ main (int argc, const char *argv[])
                       ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
-                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\" fill=\"%s\"/>", x * S, y * S, 0.5 * S,
-                             ((x ^ y) & 1) ? "black" : "white");
+                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"%s/>", x * S, y * S, 0.5 * S,
+                             ((x ^ y) & 1) ? "" : " fill=\"white\"");
             printf ("</g></svg>");
          } else if (round)
          {                      // Non standard
