@@ -617,6 +617,7 @@ main (int argc, const char *argv[])
             for (int y = 1; y < H; y++)
                for (int x = 1; x < W; x++)
                   if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
                      if ((x ^ y) & 1)
@@ -631,6 +632,7 @@ main (int argc, const char *argv[])
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
                   if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
                      if (!((x ^ y) & 1))
