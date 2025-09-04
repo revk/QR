@@ -619,7 +619,7 @@ main (int argc, const char *argv[])
                   if (grid[y * W + x] & 1)
                      ImagePixel (i, x, y) = 1;
             printf
-               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
+               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
                 W * S, H * S, W * S, H * S);
             printf ("<path d=\"");
             ImageSVGPath (i, stdout, 1);
@@ -636,12 +636,12 @@ main (int argc, const char *argv[])
                       ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET))
                      printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"%s/>", x * S, y * S, 0.5 * S,
                              ((x ^ y) & 1) ? "" : " fill=\"white\"");
-            printf ("</g></svg>");
+            printf ("</g></g></svg>");
             ImageFree (i);
          } else if (round)
          {                      // Non standard
             printf
-               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
+               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
                 W, H, W, H);
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
@@ -652,7 +652,7 @@ main (int argc, const char *argv[])
                      else
                         printf ("<circle cx=\"%d.5\" cy=\"%d.5\" r=\"0.5\"/>", x, y);
                   }
-            printf ("</g></svg>");
+            printf ("</g></g></svg>");
          } else
          {
             Image *i;
