@@ -610,14 +610,23 @@ main (int argc, const char *argv[])
       {
          if (truchet)
          {                      // non standard
+            Image *i;
+            i = ImageNew (W, H, 2);
+            i->Colour[0] = lightcolour;
+            i->Colour[1] = darkcolour;
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (grid[y * W + x] & 1)
+                     ImagePixel (i, x, y) = 1;
             printf
                ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
                 W * S, H * S, W * S, H * S);
-            // Black squares
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (grid[y * W + x] & QR_TAG_BLACK)
-                     printf ("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>", x * S, y * S, S, S);
+            printf ("<path d=\"");
+            ImageSVGPath (i, stdout, 1);
+            printf ("\"");
+            if (S > 1)
+               printf (" transform=\"scale(%d)\"", S);
+            printf ("/>");
             // Black and white circles to create Truchet pattern
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
@@ -628,6 +637,7 @@ main (int argc, const char *argv[])
                      printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"%s/>", x * S, y * S, 0.5 * S,
                              ((x ^ y) & 1) ? "" : " fill=\"white\"");
             printf ("</g></svg>");
+            ImageFree (i);
          } else if (round)
          {                      // Non standard
             printf
