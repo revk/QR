@@ -613,31 +613,20 @@ main (int argc, const char *argv[])
             printf
                ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
                 W * S, H * S, W * S, H * S);
-            // Black circles
-            for (int y = 1; y < H; y++)
-               for (int x = 1; x < W; x++)
-                  if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
-                      ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
-                      ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
-                      ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
-                     if ((x ^ y) & 1)
-                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-            // Links
+            // Black squares
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
                   if (grid[y * W + x] & QR_TAG_BLACK)
                      printf ("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>", x * S, y * S, S, S);
-            // White circles
-            printf ("<g fill=\"white\">");
+            // Black and white circles to create Truchet pattern
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
                   if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
                       ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
-                     if (!((x ^ y) & 1))
-                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-            printf ("</g>");
+                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\" fill=\"%s\"/>", x * S, y * S, 0.5 * S,
+                             ((x ^ y) & 1) ? "black" : "white");
             printf ("</g></svg>");
          } else if (round)
          {                      // Non standard
