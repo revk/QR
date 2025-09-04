@@ -9,6 +9,8 @@ The library allows custom padding in the QR code, for "hidden" data, but also pr
 
 ![space-invaders](https://WWW.ME.UK/spaceinvader.png)
 
+It includes a couple of non standard formats, cicles instead of squares, and even a truchet version. Mostly these read.
+
 There is even a coloured PNG format to allow you to see what parts are data, ecc, padding, control, etc.
 
 ![colour-qr-code](https://WWW.ME.UK/exampleqr.png)
