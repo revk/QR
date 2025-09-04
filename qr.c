@@ -627,15 +627,27 @@ main (int argc, const char *argv[])
             if (S > 1)
                printf (" transform=\"scale(%d)\"", S);
             printf ("/>");
-            // Black and white circles to create Truchet pattern
+            int dot (int x, int y)
+            {                   // Where we can place an overlay dot
+               return ((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                  ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                  ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                  ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET);
+            }
+            // Black
+            printf ("<g>");
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
-                  if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                      ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                      ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                      ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET))
-                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"%s/>", x * S, y * S, 0.5 * S,
-                             ((x ^ y) & 1) ? " fill=\"white\"" : "");
+                  if (!((x ^ y) & 1) && dot (x, y))
+                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+            printf ("</g>");
+            // White
+            printf ("<g fill=\"white\">");
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (((x ^ y) & 1) && dot (x, y))
+                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+            printf ("</g>");
             printf ("</g></g></svg>");
             ImageFree (i);
          } else if (round)
