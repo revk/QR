@@ -108,6 +108,7 @@ main (int argc, const char *argv[])
    int overlayrepeat = 0;
    int randompad = 0;
    int round = 0;
+   int truchet = 0;
    double scale = -1,
       dpi = -1;
    int S = -1;
@@ -164,7 +165,9 @@ main (int argc, const char *argv[])
       {"left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left"},
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
-      {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round"},
+      {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round (svg)"},
+      {"truchet", 0, POPT_ARG_NONE, &truchet, 0,
+       "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
       POPT_AUTOHELP {
@@ -210,11 +213,20 @@ main (int argc, const char *argv[])
 
    if (formatcode && format)
       errx (1, "--format is deprecated");
+
    char formatspace[2] = { };
    if (formatcode)
       *(format = formatspace) = formatcode;
-   if (!format)
+   if (!format && (round || truchet))
+      format = "v";             // Default
+   if (!format || !*format)
       format = "t";             // Default
+   if (round && *format != 'v')
+      errx (1, "--round only for --svg");
+   if (truchet && *format != 'v')
+      errx (1, "--truchet only for --svg");
+   if (truchet && noquiet)
+      errx (1, "--truchet does not work with --no-quiet");
 
    if (scale >= 0 && dpi >= 0)
       errx (1, "--mm or --dpi");
@@ -596,7 +608,36 @@ main (int argc, const char *argv[])
       break;
    case 'v':                   // svg
       {
-         if (round)
+         if (truchet)
+         {                      // non standard
+            printf
+               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
+                W * S, H * S, W * S, H * S);
+            // Black circles
+            for (int y = 1; y < H; y++)
+               for (int x = 1; x < W; x++)
+                  if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
+                     if ((x ^ y) & 1)
+                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+            // Links
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (grid[y * W + x] & QR_TAG_BLACK)
+                     printf ("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>", x * S, y * S, S, S);
+            // White circles
+            printf ("<g fill=\"white\">");
+            for (int y = 0; y < H; y++)
+               for (int x = 0; x < W; x++)
+                  if (((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET) ||
+                      ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET)) == QR_TAG_SET))
+                     if (!((x ^ y) & 1))
+                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+            printf ("</g>");
+            printf ("</g></svg>");
+         } else if (round)
          {                      // Non standard
             printf
                ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
@@ -771,14 +812,14 @@ main (int argc, const char *argv[])
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h + t, w, h + t);
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h + t, w, -h);
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
-            printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w, h, w, h,
-                    w, -h);
+            printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w,
+                    h, w, h, w, -h);
             printf ("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n" "(connect_pads (clearance 0))\n"
                     "(min_thickness 0.254)\n"
                     "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n"
                     "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n"
-                    "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q, h + t + q, -w - q,
-                    -h - q, w + q, -h - q);
+                    "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q, h + t + q,
+                    -w - q, -h - q, w + q, -h - q);
          }
          printf ("(fp_text user \"%s\" (at 0 2.5 unlocked) (layer \"F.Fab\")\n"
                  "(effects (font (size 0.1 0.1) (thickness 0.02))))\n", barcode);
