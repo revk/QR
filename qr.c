@@ -654,15 +654,15 @@ main (int argc, const char *argv[])
          {                      // Non standard
             printf
                ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
-                W, H, W, H);
+                W * S, H * S, W * S, H * S);
             for (int y = 0; y < H; y++)
                for (int x = 0; x < W; x++)
                   if (grid[y * W + x] & QR_TAG_BLACK)
                   {
                      if (grid[y * W + x] & QR_TAG_TARGET)
-                        printf ("<rect x=\"%d\" y=\"%d\" width=\"1\" height=\"1\"/>", x, y);
+                        printf ("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>", x * S, y * S, S, S);
                      else
-                        printf ("<circle cx=\"%d.5\" cy=\"%d.5\" r=\"0.5\"/>", x, y);
+                        printf ("<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\"/>", (0.5 + x) * S, (0.5 + y) * S, 0.5 * S);
                   }
             printf ("</g></g></svg>");
          } else
@@ -825,14 +825,14 @@ main (int argc, const char *argv[])
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", -w, h + t, w, h + t);
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, h + t, w, -h);
             printf ("(fp_line (start %f %f) (end %f %f) (layer F.CrtYd) (width 0.1))\n", w, -h, -w, -h);
-            printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h, -w,
-                    h, w, h, w, -h);
-            printf ("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n" "(connect_pads (clearance 0))\n"
-                    "(min_thickness 0.254)\n"
+            printf ("(fp_poly (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f)) (layer F.Mask) (width 0))\n", -w, -h,
+                    -w, h, w, h, w, -h);
+            printf ("(zone (net 0) (net_name \"\") (layer \"F.Cu\") (hatch edge 0.508)\n"
+                    "(connect_pads (clearance 0))\n" "(min_thickness 0.254)\n"
                     "(keepout (tracks not_allowed) (vias not_allowed) (copperpour not_allowed) (footprints not_allowed))\n"
                     "(fill (thermal_gap 0.508) (thermal_bridge_width 0.508))\n"
-                    "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q, h + t + q,
-                    -w - q, -h - q, w + q, -h - q);
+                    "(polygon (pts (xy %f %f) (xy %f %f) (xy %f %f) (xy %f %f))))\n", w + q, h + t + q, -w - q,
+                    h + t + q, -w - q, -h - q, w + q, -h - q);
          }
          printf ("(fp_text user \"%s\" (at 0 2.5 unlocked) (layer \"F.Fab\")\n"
                  "(effects (font (size 0.1 0.1) (thickness 0.02))))\n", barcode);
