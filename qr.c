@@ -216,8 +216,7 @@ main (int argc, const char *argv[])
        "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
-      POPT_AUTOHELP {
-                     NULL, 0, 0, NULL, 0}
+      POPT_AUTOHELP {NULL, 0, 0, NULL, 0, NULL}
    };
    optCon = poptGetContext (NULL, argc, argv, optionsTable, 0);
    poptSetOtherOptionHelp (optCon, "[barcode]");
