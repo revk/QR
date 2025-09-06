@@ -156,7 +156,7 @@ main (int argc, const char *argv[])
       {"barcode", 'c', POPT_ARG_STRING, &barcode, 0, "Barcode", "text"},
       {"infile", 'i', POPT_ARG_STRING, &infile, 0, "Barcode file", "filename"},
       {"inenv", '$', POPT_ARG_STRING, &inenv, 0, "Barcode from environment variable", "envname"},
-      {"mode", 'm', POPT_ARG_STRING, &modestr, 0, "Mode", "N/A/8/K"},
+      {"mode", 'm', POPT_ARG_STRING, &modestr, 0, "Mode", "N/A/8/K per character"},
       {"ecl", 'e', POPT_ARG_STRING, &eccstr, 0, "EC level", "L/M/Q/H"},
       {"version", 'v', POPT_ARG_INT, &ver, 0, "Version(size)", "1-40"},
       {"mask", 'x', POPT_ARG_STRING, &mask, 0, "Mask", "0-7"},
@@ -191,9 +191,12 @@ main (int argc, const char *argv[])
       {"hex", 0, POPT_ARG_VAL, &formatcode, 'h', "Hex"},
       {"info", 0, POPT_ARG_VAL, &formatcode, 'i', "Info"},
       {"info-size", 0, POPT_ARG_VAL, &formatcode, 'x', "Size"},
-      {"size", 0, POPT_ARGFLAG_DOC_HIDDEN|POPT_ARG_VAL, &formatcode, 'x', "Size"},
+      {"size", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'x', "Size"},
       {"info-version", 0, POPT_ARG_VAL, &formatcode, 'y', "Version"},
       {"info-ecl", 0, POPT_ARG_VAL, &formatcode, 'z', "ECL"},
+      {"info-mask", 0, POPT_ARG_VAL, &formatcode, 'X', "Mask"},
+      {"info-mode", 0, POPT_ARG_VAL, &formatcode, 'Y', "Encoding"},
+      {"info-penalty", 0, POPT_ARG_VAL, &formatcode, 'Z', "Penalty"},
       {"scale", 0, POPT_ARG_INT, &S, 0, "Scale", "pixels"},
       {"mm", 0, POPT_ARG_DOUBLE, &scale, 0, "Size of pixels", "mm"},
       {"dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi"},
@@ -529,14 +532,23 @@ main (int argc, const char *argv[])
       printf ("Size:		%d\n", W);
       printf ("Encoding:	%s\n", newmode);
       break;
-   case 'x':                   // size - include space
-      printf ("%d", W);
+   case 'x':
+      if (*format == 'x')
+         printf ("%d", W);      // Size
+      else
+         printf ("%d", newmask);        // Mask
       break;
-   case 'y':                   // version
-      printf ("%d", newver);
+   case 'y':
+      if (*format == 'y')
+         printf ("%d", newver); // Version
+      else
+         printf ("%s", newmode);        // Mode
       break;
-   case 'z':                   // ecl
-      printf ("%c", newecl);
+   case 'z':
+      if (*format == 'z')
+         printf ("%c", newecl); // ECL
+      else
+         printf ("%d", score);  // Penalty score
       break;
    case 'h':                   // hex
       dumphex (grid, W, H, 0, S, 0);
