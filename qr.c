@@ -536,7 +536,7 @@ main (int argc, const char *argv[])
       if (*format == 'x')
          printf ("%d", W);      // Size
       else
-         printf ("%d", newmask);        // Mask
+         printf ("%c", newmask);        // Mask
       break;
    case 'y':
       if (*format == 'y')
