@@ -501,7 +501,8 @@ main (int argc, const char *argv[])
       if (rotate < 0)
          rotate = 0;
       int padlen = 0;
-    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen (pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep: &score, padlenp:&padlen);
+    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen (pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep: &score, padlenp:randompad ? &padlen :
+                        NULL);
       H = W;
       if (randompad && padlen > 2)
       {                         // Padding available
