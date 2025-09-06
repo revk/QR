@@ -108,6 +108,7 @@ main (int argc, const char *argv[])
    int overlayrepeat = 0;
    int randompad = 0;
    int round = 0;
+   int diamond = 0;
    int truchet = 0;
    double scale = -1,
       dpi = -1;
@@ -166,6 +167,7 @@ main (int argc, const char *argv[])
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
       {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round (svg)"},
+      {"diamond", 0, POPT_ARG_NONE, &diamond, 0, "45 degree diamond format (svg)"},
       {"truchet", 0, POPT_ARG_NONE, &truchet, 0,
        "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
@@ -217,16 +219,20 @@ main (int argc, const char *argv[])
    char formatspace[2] = { };
    if (formatcode)
       *(format = formatspace) = formatcode;
-   if (!format && (round || truchet))
+   if (!format && (round || truchet || diamond))
       format = "v";             // Default
    if (!format || !*format)
       format = "t";             // Default
+   if (diamond && *format != 'v')
+      errx (1, "--diamond only for --svg");
    if (round && *format != 'v')
       errx (1, "--round only for --svg");
    if (truchet && *format != 'v')
       errx (1, "--truchet only for --svg");
    if (truchet && noquiet)
       errx (1, "--truchet does not work with --no-quiet");
+   if (round && truchet)
+      errx (1, "Can't --round and --truchet");
 
    if (scale >= 0 && dpi >= 0)
       errx (1, "--mm or --dpi");
@@ -608,79 +614,71 @@ main (int argc, const char *argv[])
       break;
    case 'v':                   // svg
       {
-         if (truchet)
-         {                      // non standard
-            Image *i;
-            i = ImageNew (W, H, 2);
-            i->Colour[0] = lightcolour;
-            i->Colour[1] = darkcolour;
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (grid[y * W + x] & 1)
-                     ImagePixel (i, x, y) = 1;
-            printf
-               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
-                W * S, H * S, W * S, H * S);
-            printf ("<path d=\"");
-            ImageSVGPath (i, stdout, 1);
+         Image *i;
+         i = ImageNew (W, H, 2);
+         i->Colour[0] = lightcolour;
+         i->Colour[1] = darkcolour;
+         for (int y = 0; y < H; y++)
+            for (int x = 0; x < W; x++)
+               if ((grid[y * W + x] & QR_TAG_BLACK) && (!round || (grid[y * W + x] & QR_TAG_TARGET)))
+                  ImagePixel (i, x, y) = 1;
+         if (!isupper (*format))
+         {
+            printf ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" ");
+            if (diamond)
+            {
+               int Q = W * S * 1.4142 + 1;
+               if (Q & 1)
+                  Q++;
+               int O = (Q - W * S) / 2;
+               printf
+                  ("width=\"%d\" height=\"%d\"><g transform=\"rotate(45,%d,%d)translate(%d,%d)\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/>",
+                   Q, Q, Q / 2, Q / 2, O, O, W * S, H * S);
+            } else
+               printf ("width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/>", W * S, H * S, W * S,
+                       H * S);
+            printf ("<g fill=\"black\" stroke=\"none\"><path d=\"");
+         }
+         ImageSVGPath (i, stdout, 1);
+         if (!isupper (*format))
+         {                      // not just path
             printf ("\"");
             if (S > 1)
                printf (" transform=\"scale(%d)\"", S);
             printf ("/>");
-            int dot (int x, int y)
-            {                   // Where we can place an overlay dot
-               return ((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                  ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                  ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                  ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET);
-            }
-            // Black
-            printf ("<g>");
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (!((x ^ y) & 1) && dot (x, y))
-                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-            printf ("</g>");
-            // White
-            printf ("<g fill=\"white\">");
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (((x ^ y) & 1) && dot (x, y))
-                     printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-            printf ("</g>");
-            printf ("</g></g></svg>");
-            ImageFree (i);
-         } else if (round)
-         {                      // Non standard
-            printf
-               ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/><g fill=\"black\" stroke=\"none\">",
-                W * S, H * S, W * S, H * S);
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (grid[y * W + x] & QR_TAG_BLACK)
-                  {
-                     if (grid[y * W + x] & QR_TAG_TARGET)
-                        printf ("<rect x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>", x * S, y * S, S, S);
-                     else
+            if (truchet)
+            {                   // Non standard (Truchet style)
+               int dot (int x, int y)
+               {                // Where we can place an overlay dot
+                  return ((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                     ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                     ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
+                     ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET);
+               }
+               // Black
+               printf ("<g>");
+               for (int y = 0; y < H; y++)
+                  for (int x = 0; x < W; x++)
+                     if (!((x ^ y) & 1) && dot (x, y))
+                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+               printf ("</g>");
+               // White
+               printf ("<g fill=\"white\">");
+               for (int y = 0; y < H; y++)
+                  for (int x = 0; x < W; x++)
+                     if (((x ^ y) & 1) && dot (x, y))
+                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+               printf ("</g>");
+            } else if (round)
+            {                   // Non standard (round pixels)
+               for (int y = 0; y < H; y++)
+                  for (int x = 0; x < W; x++)
+                     if ((grid[y * W + x] & (QR_TAG_TARGET | QR_TAG_BLACK)) == QR_TAG_BLACK)
                         printf ("<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\"/>", (0.5 + x) * S, (0.5 + y) * S, 0.5 * S);
-                  }
+            }
             printf ("</g></g></svg>");
-         } else
-         {
-            Image *i;
-            i = ImageNew (W, H, 2);
-            i->Colour[0] = lightcolour;
-            i->Colour[1] = darkcolour;
-            for (int y = 0; y < H; y++)
-               for (int x = 0; x < W; x++)
-                  if (grid[y * W + x] & 1)
-                     ImagePixel (i, x, y) = 1;
-            if (isupper (*format))
-               ImageSVGPath (i, stdout, 1);
-            else
-               ImageWriteSVG (i, stdout, 0, -1, barcode, scale);
-            ImageFree (i);
          }
+         ImageFree (i);
       }
       break;
    case 'd':                   // png data
