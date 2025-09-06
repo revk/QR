@@ -71,6 +71,41 @@ dumphex (unsigned char *grid, int W, int H, unsigned char p, int S, int B)
       printf ("\n");
 }
 
+void
+outdata (char *buf, size_t len, const char *mime)
+{
+   printf ("data:%s;base64,", mime);
+   static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+   int b = 0,
+      v = 0,
+      i = 0;
+   while (i < len)
+   {
+      unsigned char c = buf[i++];
+      b += 8;
+      v = (v << 8) | c;
+      while (b >= 6)
+      {
+         b -= 6;
+         putchar (BASE64[(v >> b) & 0x3F]);
+      }
+   }
+   if (b)
+   {
+      b += 8;
+      v = (v << 8);
+      b -= 6;
+      putchar (BASE64[(v >> b) & 0x3F]);
+   }
+   while (b)
+   {
+      if (b < 6)
+         b += 8;
+      b -= 6;
+      putchar ('=');
+   }
+}
+
 int
 main (int argc, const char *argv[])
 {
@@ -110,6 +145,8 @@ main (int argc, const char *argv[])
    int round = 0;
    int diamond = 0;
    int truchet = 0;
+   int data = 0;
+   int img = 0;
    double scale = -1,
       dpi = -1;
    int S = -1;
@@ -139,8 +176,8 @@ main (int argc, const char *argv[])
       {"kicad-tag", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadtag, 0, "KiCad tag below QR", "text"},
       {"kicad-font", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadfont, 0, "KiCad font", "font"},
       {"kicad-layer", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadlayer, 0, "KiCad layer", "layer"},
-      {"data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI"},
-      {"img", 0, POPT_ARG_VAL, &formatcode, 'D', "PNG Data URI in img"},
+      {"data", 0, POPT_ARG_NONE, &data, 0, "data: URL"},
+      {"img", 0, POPT_ARG_NONE, &img, 0, "data: URL as <img...>"},
       {"png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG"},
       {"eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS"},
       {"ps", 0, POPT_ARG_VAL, &formatcode, 'g', "Postscript"},
@@ -220,6 +257,8 @@ main (int argc, const char *argv[])
    char formatspace[2] = { };
    if (formatcode)
       *(format = formatspace) = formatcode;
+   if (!format && (data || img))
+      format = "p";             // Default
    if (!format && (round || truchet || diamond))
       format = "v";             // Default
    if (!format || !*format)
@@ -250,13 +289,10 @@ main (int argc, const char *argv[])
       S = 1;
    if (scale < 0)
       scale = 0;
-
    if (outfile && !strcmp (outfile, "data:"))
    {                            // Legacy format for data:
-      if (*format != 'p')
-         errx (1, "data: only for png");
       outfile = NULL;
-      *format = 'd';
+      data = 1;
    }
    if (outfile && strcmp (outfile, "-") && !freopen (outfile, "w", stdout))
       err (1, "%s", outfile);
@@ -476,7 +512,6 @@ main (int argc, const char *argv[])
        grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
       }
    }
-
    // output
    if (tolower (*format) != 'i' && (!grid || !W))
       errx (1, "No barcode produced\n");
@@ -615,6 +650,11 @@ main (int argc, const char *argv[])
       break;
    case 'v':                   // svg
       {
+         FILE *o = stdout;
+         char *buf = NULL;
+         size_t len = 0;
+         if (data || img)
+            o = open_memstream (&buf, &len);
          Image *i;
          i = ImageNew (W, H, 2);
          i->Colour[0] = lightcolour;
@@ -625,28 +665,28 @@ main (int argc, const char *argv[])
                   ImagePixel (i, x, y) = 1;
          if (!isupper (*format))
          {
-            printf ("<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" ");
+            fprintf (o, "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" ");
             if (diamond)
             {
                int Q = W * S * 1.4142 + 1;
                if (Q & 1)
                   Q++;
                int O = (Q - W * S) / 2;
-               printf
-                  ("width=\"%d\" height=\"%d\"><g transform=\"rotate(45,%d,%d)translate(%d,%d)\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/>",
-                   Q, Q, Q / 2, Q / 2, O, O, W * S, H * S);
+               fprintf (o,
+                        "width=\"%d\" height=\"%d\"><g transform=\"rotate(45,%d,%d)translate(%d,%d)\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/>",
+                        Q, Q, Q / 2, Q / 2, O, O, W * S, H * S);
             } else
-               printf ("width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/>", W * S, H * S, W * S,
-                       H * S);
-            printf ("<g fill=\"black\" stroke=\"none\"><path d=\"");
+               fprintf (o, "width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/>", W * S, H * S, W * S,
+                        H * S);
+            fprintf (o, "<g fill=\"black\" stroke=\"none\"><path d=\"");
          }
-         ImageSVGPath (i, stdout, 1);
+         ImageSVGPath (i, o, 1);
          if (!isupper (*format))
          {                      // not just path
-            printf ("\"");
+            fprintf (o, "\"");
             if (S > 1)
-               printf (" transform=\"scale(%d)\"", S);
-            printf ("/>");
+               fprintf (o, " transform=\"scale(%d)\"", S);
+            fprintf (o, "/>");
             if (truchet)
             {                   // Non standard (Truchet style)
                int dot (int x, int y)
@@ -657,32 +697,41 @@ main (int argc, const char *argv[])
                      ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET);
                }
                // Black
-               printf ("<g>");
+               fprintf (o, "<g>");
                for (int y = 0; y < H; y++)
                   for (int x = 0; x < W; x++)
                      if (!((x ^ y) & 1) && dot (x, y))
-                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-               printf ("</g>");
+                        fprintf (o, "<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+               fprintf (o, "</g>");
                // White
-               printf ("<g fill=\"white\">");
+               fprintf (o, "<g fill=\"white\">");
                for (int y = 0; y < H; y++)
                   for (int x = 0; x < W; x++)
                      if (((x ^ y) & 1) && dot (x, y))
-                        printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
-               printf ("</g>");
+                        fprintf (o, "<circle cx=\"%d\" cy=\"%d\" r=\"%.1f\"/>", x * S, y * S, 0.5 * S);
+               fprintf (o, "</g>");
             } else if (round)
             {                   // Non standard (round pixels)
                for (int y = 0; y < H; y++)
                   for (int x = 0; x < W; x++)
                      if ((grid[y * W + x] & (QR_TAG_TARGET | QR_TAG_BLACK)) == QR_TAG_BLACK)
-                        printf ("<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\"/>", (0.5 + x) * S, (0.5 + y) * S, 0.5 * S);
+                        fprintf (o, "<circle cx=\"%.1f\" cy=\"%.1f\" r=\"%.1f\"/>", (0.5 + x) * S, (0.5 + y) * S, 0.5 * S);
             }
-            printf ("</g></g></svg>");
+            fprintf (o, "</g></g></svg>");
          }
          ImageFree (i);
+         if (img || data)
+         {
+            fclose (o);
+            if (img)
+               printf ("<img src=\"");
+            outdata (buf, len, "image/svg+xml");
+            free (buf);
+            if (img)
+               printf ("\">");
+         }
       }
       break;
-   case 'd':                   // png data
    case 'p':                   // png
       {
          int x,
@@ -730,47 +779,18 @@ main (int argc, const char *argv[])
                   if (grid[(y / S) * W + (x / S)] & 1)
                      ImagePixel (i, x, y) = 1;
          }
-         if (tolower (*format) == 'd')
+         if (data || img)
          {                      // data URI
-            if (*format == 'D')
+            if (img)
                printf ("<img src=\"");
             char *buf;
             size_t len;
             FILE *f = open_memstream (&buf, &len);
             ImageWritePNG (i, f, 0, -1, barcode);
             fclose (f);
-            printf ("data:image/png;base64,");
-            static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-            int b = 0,
-               v = 0,
-               i = 0;
-            while (i < len)
-            {
-               unsigned char c = buf[i++];
-               b += 8;
-               v = (v << 8) | c;
-               while (b >= 6)
-               {
-                  b -= 6;
-                  putchar (BASE64[(v >> b) & 0x3F]);
-               }
-            }
-            if (b)
-            {
-               b += 8;
-               v = (v << 8);
-               b -= 6;
-               putchar (BASE64[(v >> b) & 0x3F]);
-            }
-            while (b)
-            {
-               if (b < 6)
-                  b += 8;
-               b -= 6;
-               putchar ('=');
-            }
+            outdata (buf, len, "image/png");
             free (buf);
-            if (*format == 'D')
+            if (img)
                printf ("\">");
          } else
             ImageWritePNG (i, stdout, 0, -1, barcode);
