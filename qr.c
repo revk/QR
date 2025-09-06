@@ -140,6 +140,7 @@ main (int argc, const char *argv[])
       {"kicad-font", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadfont, 0, "KiCad font", "font"},
       {"kicad-layer", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &kicadlayer, 0, "KiCad layer", "layer"},
       {"data", 0, POPT_ARG_VAL, &formatcode, 'd', "PNG Data URI"},
+      {"img", 0, POPT_ARG_VAL, &formatcode, 'D', "PNG Data URI in img"},
       {"png-colour", 0, POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_VAL, &formatcode, 'P', "PNG"},
       {"eps", 0, POPT_ARG_VAL, &formatcode, 'e', "EPS"},
       {"ps", 0, POPT_ARG_VAL, &formatcode, 'g', "Postscript"},
@@ -729,8 +730,10 @@ main (int argc, const char *argv[])
                   if (grid[(y / S) * W + (x / S)] & 1)
                      ImagePixel (i, x, y) = 1;
          }
-         if (*format == 'd')
+         if (tolower (*format) == 'd')
          {                      // data URI
+            if (*format == 'D')
+               printf ("<img src=\"");
             char *buf;
             size_t len;
             FILE *f = open_memstream (&buf, &len);
@@ -767,6 +770,8 @@ main (int argc, const char *argv[])
                putchar ('=');
             }
             free (buf);
+            if (*format == 'D')
+               printf ("\">");
          } else
             ImageWritePNG (i, stdout, 0, -1, barcode);
          ImageFree (i);
