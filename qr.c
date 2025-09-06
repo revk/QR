@@ -76,9 +76,9 @@ outdata (char *buf, size_t len, const char *mime)
 {
    printf ("data:%s;base64,", mime);
    static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+   size_t i = 0;
    int b = 0,
-      v = 0,
-      i = 0;
+      v = 0;
    while (i < len)
    {
       unsigned char c = buf[i++];
