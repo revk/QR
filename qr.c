@@ -190,7 +190,10 @@ main (int argc, const char *argv[])
       {"binary", 0, POPT_ARG_VAL, &formatcode, 'b', "Binary"},
       {"hex", 0, POPT_ARG_VAL, &formatcode, 'h', "Hex"},
       {"info", 0, POPT_ARG_VAL, &formatcode, 'i', "Info"},
-      {"size", 0, POPT_ARG_VAL, &formatcode, 'x', "Size"},
+      {"info-size", 0, POPT_ARG_VAL, &formatcode, 'x', "Size"},
+      {"size", 0, POPT_ARGFLAG_DOC_HIDDEN|POPT_ARG_VAL, &formatcode, 'x', "Size"},
+      {"info-version", 0, POPT_ARG_VAL, &formatcode, 'y', "Version"},
+      {"info-ecl", 0, POPT_ARG_VAL, &formatcode, 'z', "ECL"},
       {"scale", 0, POPT_ARG_INT, &S, 0, "Scale", "pixels"},
       {"mm", 0, POPT_ARG_DOUBLE, &scale, 0, "Size of pixels", "mm"},
       {"dpi", 0, POPT_ARG_DOUBLE, &dpi, 0, "Size of pixels", "dpi"},
@@ -528,6 +531,12 @@ main (int argc, const char *argv[])
       break;
    case 'x':                   // size - include space
       printf ("%d", W);
+      break;
+   case 'y':                   // version
+      printf ("%d", newver);
+      break;
+   case 'z':                   // ecl
+      printf ("%c", newecl);
       break;
    case 'h':                   // hex
       dumphex (grid, W, H, 0, S, 0);
