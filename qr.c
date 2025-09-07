@@ -76,9 +76,9 @@ outdata (char *buf, size_t len, const char *mime)
 {
    printf ("data:%s;base64,", mime);
    static const char BASE64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+   size_t i = 0;
    int b = 0,
-      v = 0,
-      i = 0;
+      v = 0;
    while (i < len)
    {
       unsigned char c = buf[i++];
@@ -216,8 +216,7 @@ main (int argc, const char *argv[])
        "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
       {"format", 'f', POPT_ARGFLAG_DOC_HIDDEN | POPT_ARG_STRING, &format, 0, "Output format",
        "x=size/t[s]=text/e[s]=EPS/b=bin/h[s]=hex/p[s]=PNG/g[s]=ps/v[s]=svg"},
-      POPT_AUTOHELP {
-                     NULL, 0, 0, NULL, 0}
+      POPT_AUTOHELP {NULL, 0, 0, NULL, 0, NULL}
    };
    optCon = poptGetContext (NULL, argc, argv, optionsTable, 0);
    poptSetOtherOptionHelp (optCon, "[barcode]");
@@ -644,6 +643,7 @@ main (int argc, const char *argv[])
               "%%%%BarcodeSize: %dx%d\n" "%%%%DocumentData: Clean7Bit\n" "%%%%LanguageLevel: 1\n" "%%%%Pages: 1\n"
               "%%%%BoundingBox: 0 0 %d %d\n" "%%%%EndComments\n" "%%%%Page: 1 1\n", barcode, W * S, H * S,
               (int) ((double) W * (scale * 72 / 25.4 ? : S) + .99), (int) ((double) H * (scale * 72 / 25.4 ? : S) + 0.99));
+      /* fallthru */
    case 'g':                   // PS
       //printf ("%d %d 1[1 0 0 1 -%d -%d]{<\n", W * S, H * S, S, S);
       if (scale)
