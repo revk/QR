@@ -34,14 +34,12 @@ safemalloc (int n)
 void
 dumphex (unsigned char *grid, int W, int H, unsigned char p, int S, int B)
 {
-   int c = 0,
-      y;
-   for (y = -B * S; y < (H + B) * S; y++)
+   int c = 0;
+   for (int y = -B * S; y < (H + B) * S; y++)
    {
       int v = 0,
-         x,
          b = 128;
-      for (x = -B * S; x < (W + B) * S; x++)
+      for (int x = -B * S; x < (W + B) * S; x++)
       {
          if (x >= 0 && x < W * S && y >= 0 && y < H * S && (grid[(H - 1 - y / S) * W + (x / S)] & 1))
             v |= b;
@@ -138,6 +136,7 @@ main (int argc, const char *argv[])
    int parity = 0;
    int formatcode = 0;
    int noquiet = 0;
+   int badquiet = 0;
    int rotate = -1;
    int minsize = 0;
    int overlayrepeat = 0;
@@ -205,6 +204,7 @@ main (int argc, const char *argv[])
       {"repeat", 0, POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay"},
       {"random", 0, POPT_ARG_NONE, &randompad, 0, "Random padding"},
       {"no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space"},
+      {"bad-quiet", 0, POPT_ARG_NONE, &badquiet, 0, "Mess up quiet space"},
       {"right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right"},
       {"down", 0, POPT_ARG_VAL, &rotate, 2, "Rotate 180"},
       {"left", 'l', POPT_ARG_VAL, &rotate, 1, "Rotate left"},
@@ -279,6 +279,8 @@ main (int argc, const char *argv[])
       errx (1, "--truchet does not work with --no-quiet");
    if (round && truchet)
       errx (1, "Can't --round and --truchet");
+   if (badquiet && noquiet)
+      errx (1, "--bad-quiet does not work with --no-quiet");
 
    if (scale >= 0 && dpi >= 0)
       errx (1, "--mm or --dpi");
@@ -519,6 +521,16 @@ main (int argc, const char *argv[])
        grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
       }
    }
+   if (badquiet)
+      for (int y = 0; y < H; y++)
+         for (int x = 0; x < W; x++)
+            if ((x < 4 || x >= W - 4) || (y < 4 || y >= H - 4))
+               if ((!truchet || (x && x < W - 1 && y && y < H - 1)) &&  //
+                   (x != 3 || y < 3 || y >= H - 3 || (y > 11 && y < H - 12)) && //
+                   (y != 3 || x < 3 || x >= W - 3 || (x > 11 && x < W - 12)) && //
+                   (x != W - 4 || y < 3 || y > 11) &&   //
+                   (y != H - 4 || x < 3 || x > 11))
+                  grid[y * W + x] = QR_TAG_SET | (random () & 1 ? QR_TAG_BLACK : 0);
    // output
    if (tolower (*format) != 'i' && (!grid || !W))
       errx (1, "No barcode produced\n");
@@ -555,13 +567,11 @@ main (int argc, const char *argv[])
       break;
    case 'b':                   // bin
       {
-         int y;
-         for (y = H * S - 1; y >= 0; y--)       // from top
+         for (int y = H * S - 1; y >= 0; y--)   // from top
          {
             int v = 0,
-               x,
                b = 128;
-            for (x = 0; x < W * S; x++)
+            for (int x = 0; x < W * S; x++)
             {
                if (grid[(y / S) * W + (x / S)] & 1)
                   v |= b;
@@ -581,11 +591,9 @@ main (int argc, const char *argv[])
    case 't':                   // text
       {
          const unsigned char invert = (*format == 'T') ? 0 : 1;
-         int y;
-         for (y = 0; y < H * S; y++)
+         for (int y = 0; y < H * S; y++)
          {
-            int x;
-            for (x = 0; x < (W * S); x++)
+            for (int x = 0; x < (W * S); x++)
                printf ("%s", (grid[W * (y / S) + (x / S)] & 1) ^ invert ? "█" : " ");
             printf ("\n");
          }
@@ -595,12 +603,10 @@ main (int argc, const char *argv[])
       {
          const char *blocks[4] = { " ", "▀", "▄", "█" };
          const unsigned char invert = (*format == 'A') ? 0 : 1;
-         int y;
-         for (y = 0; y < H * S; y += 2)
+         for (int y = 0; y < H * S; y += 2)
          {
             const bool has_bottom = y + 1 < H * S;
-            int x;
-            for (x = 0; x < W * S; x++)
+            for (int x = 0; x < W * S; x++)
             {
                unsigned int top = grid[W * (y / S) + (x / S)] & 1;
                unsigned int bottom = has_bottom ? (grid[W * ((y + 1) / S) + (x / S)] & 1) : 0;
@@ -619,12 +625,10 @@ main (int argc, const char *argv[])
             "▄", "▙", "▟", "█"
          };
          const unsigned char invert = (*format == 'Q') ? 0 : 1;
-         int y;
-         for (y = 0; y < H * S; y += 2)
+         for (int y = 0; y < H * S; y += 2)
          {
             const bool has_bottom = y + 1 < H * S;
-            int x;
-            for (x = 0; x < W * S; x += 2)
+            for (int x = 0; x < W * S; x += 2)
             {
                const bool has_right = x + 1 < W * S;
                unsigned int top_left = grid[W * (y / S) + (x / S)] & 1;
@@ -756,8 +760,6 @@ main (int argc, const char *argv[])
       break;
    case 'p':                   // png
       {
-         int x,
-           y;
          Image *i;
          if (*format == 'P')
          {                      // Special mode to make coloured QR code with different logical parts
@@ -774,8 +776,8 @@ main (int argc, const char *argv[])
             i->Colour[9] = darkcolour;
             i->Colour[10] = 0xCCCCCC;   // FORMAT
             i->Colour[11] = 0x444444;
-            for (y = 0; y < H * S; y++)
-               for (x = 0; x < W * S; x++)
+            for (int y = 0; y < H * S; y++)
+               for (int x = 0; x < W * S; x++)
                {
                   unsigned char u = grid[(H - 1 - y / S) * W + (x / S)],
                      o = (u & 1);
@@ -796,8 +798,8 @@ main (int argc, const char *argv[])
             i = ImageNew (W * S, H * S, 2);
             i->Colour[0] = lightcolour;
             i->Colour[1] = darkcolour;
-            for (y = 0; y < H * S; y++)
-               for (x = 0; x < W * S; x++)
+            for (int y = 0; y < H * S; y++)
+               for (int x = 0; x < W * S; x++)
                   if (grid[(y / S) * W + (x / S)] & 1)
                      ImagePixel (i, x, y) = 1;
          }
