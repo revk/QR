@@ -535,7 +535,7 @@ main (int argc, const char *argv[])
          for (int x = 0; x < W; x++)
             if (((x < quiet || x >= W - quiet) || (y < quiet || y >= H - quiet)) &&     //
                 (!truchet || (x && x < W - 1 && y && y < H - 1)) &&     //
-                (!circle || ((x * 2 - W) * (x * 2 - W) + (y * 2 - H) * (y * 2 - H) < W * H * 9 / 10)) &&        //
+                (!circle || ((x * 2 - W) * (x * 2 - W) + (y * 2 - H) * (y * 2 - H) < (truchet ? (W - 2) * (H - 2) : W * H))) && //
                 !((x == quiet - 1 && ((y >= quiet - 1 && y < quiet + 8) || (y >= H - quiet - 8 && y <= H - quiet))) ||  //
                   (y == quiet - 1 && ((x >= quiet - 1 && x < quiet + 8) || (x >= W - quiet - 8 && x <= W - quiet))) ||  //
                   (x == W - quiet && y >= quiet - 1 && y < quiet + 8) ||        //
