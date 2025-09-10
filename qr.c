@@ -339,7 +339,11 @@ main (int argc, const char *argv[])
    if (circle)
    {                            // Work out quiet
     grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, minsize: minsize, rotate: rotate, scorep:&score);
-      quiet = W * 0.4142;
+      {
+         int q = W * 0.4142;
+         if (q < quiet)
+            quiet = q;
+      }
    }
    if (overlay)
    {                            // Overlay in padding
