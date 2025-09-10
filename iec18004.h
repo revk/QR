@@ -31,6 +31,7 @@ typedef struct {
    unsigned char san;           // Structured append 1-16 total
    unsigned char parity;        // Structured append Parity (XOR of all data in total barcode, so same for all parts)
    unsigned char ai;            // Application Indicator (FNC1=2)
+   unsigned char quiet;     	// Override normal 4 unit quiet
    unsigned char noquiet:1;     // No quiet space included
    unsigned char rotate:2;      // Rotate image
    unsigned int padlen;         // Length of raw padding data to use

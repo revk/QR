@@ -136,12 +136,14 @@ main (int argc, const char *argv[])
    int parity = 0;
    int formatcode = 0;
    int noquiet = 0;
+   int quiet = 0;
    int badquiet = 0;
    int rotate = -1;
    int minsize = 0;
    int overlayrepeat = 0;
    int randompad = 0;
    int round = 0;
+   int circle = 0;
    int diamond = 0;
    int truchet = 0;
    int data = 0;
@@ -203,6 +205,7 @@ main (int argc, const char *argv[])
       {"overlay", 0, POPT_ARG_STRING, &overlay, 0, "Custom padding overlay", ".X./X.X pattern or $var or @file"},
       {"repeat", 0, POPT_ARG_NONE, &overlayrepeat, 0, "Repeat overlay"},
       {"random", 0, POPT_ARG_NONE, &randompad, 0, "Random padding"},
+      {"quiet", 0, POPT_ARG_INT, &quiet, 0, "Set quiet", "units"},
       {"no-quiet", 'Q', POPT_ARG_NONE, &noquiet, 0, "No quiet space"},
       {"bad-quiet", 0, POPT_ARG_NONE, &badquiet, 0, "Mess up quiet space"},
       {"right", 'r', POPT_ARG_VAL, &rotate, 3, "Rotate right"},
@@ -211,6 +214,7 @@ main (int argc, const char *argv[])
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
       {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round (svg)"},
+      {"circle", 0, POPT_ARG_NONE, &circle, 0, "Non standard padded to circle"},
       {"diamond", 0, POPT_ARG_NONE, &diamond, 0, "45 degree diamond format (svg)"},
       {"truchet", 0, POPT_ARG_NONE, &truchet, 0,
        "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
@@ -280,6 +284,8 @@ main (int argc, const char *argv[])
       errx (1, "Can't --round and --truchet");
    if (badquiet && noquiet)
       errx (1, "--bad-quiet does not work with --no-quiet");
+   if (!quiet && !noquiet)
+      quiet = 4;
 
    if (scale >= 0 && dpi >= 0)
       errx (1, "--mm or --dpi");
@@ -330,6 +336,11 @@ main (int argc, const char *argv[])
       newecl = 0;
    unsigned char newver = 0;
    unsigned int score = 0;
+   if (circle)
+   {                            // Work out quiet
+    grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, minsize: minsize, rotate: rotate, scorep:&score);
+      quiet = W * 0.4142;
+   }
    if (overlay)
    {                            // Overlay in padding
       if (rotate < 0)
@@ -355,7 +366,7 @@ main (int argc, const char *argv[])
       int padlen = 0;
       if (!ver && !minsize)
          padlen = barcodelen;   // Force some padding
-    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep:&score);
+    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, maskp: &newmask, verp: &newver, eclp: &newecl, padmap: &padmap, minsize: minsize, rotate: rotate, padlenp: &padlen, modep: &newmode, scorep:&score);
       H = W;
       if (padlen > 2)
       {                         // Padding available
@@ -366,7 +377,7 @@ main (int argc, const char *argv[])
             if (getrandom (newpad, padlen, 0) != padlen)
                err (1, "Random fail");
             free (grid);
-          grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
+          grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
          }
          // Find size of overlay
          int ow = 0,
@@ -384,7 +395,6 @@ main (int argc, const char *argv[])
                if ((*o == '\n' && !o[1]) || !*o++)
                   break;
             }
-         int q = (noquiet ? 0 : 4);
          int ox = (W - ow) / 2,
             oy = (H - oh) / 2;
          // Find a good place for overlay
@@ -501,14 +511,14 @@ main (int argc, const char *argv[])
             y++;
          }
          free (grid);
-       grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
+       grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, padlen: padlen, pad: newpad, padmap: &padmap, minsize: minsize, rotate: rotate, scorep:&score);
       }
    } else
    {                            // Simple
       if (rotate < 0)
          rotate = 0;
       int padlen = 0;
-    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: pad ? strlen (pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep: &score, padlenp:randompad ? &padlen :
+    grid = qr_encode (barcodelen, barcode, ver, ecl, mask ? *mask : 0, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, padlen: pad ? strlen (pad) : 0, pad: pad, maskp: &newmask, verp: &newver, eclp: &newecl, modep: &newmode, minsize: minsize, rotate: rotate, scorep: &score, padlenp:randompad ? &padlen :
                         NULL);
       H = W;
       if (randompad && padlen > 2)
@@ -517,19 +527,21 @@ main (int argc, const char *argv[])
          if (getrandom (newpad, padlen, 0) != padlen)
             err (1, "Random fail");
          free (grid);
-       grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
+       grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, padlen: padlen, pad: newpad, minsize: minsize, rotate: rotate, scorep:&score);
       }
    }
    if (badquiet)
       for (int y = 0; y < H; y++)
          for (int x = 0; x < W; x++)
-            if ((x < 4 || x >= W - 4) || (y < 4 || y >= H - 4))
-               if ((!truchet || (x && x < W - 1 && y && y < H - 1)) &&  //
-                   (x != 3 || y < 3 || y >= H - 3 || (y > 11 && y < H - 12)) && //
-                   (y != 3 || x < 3 || x >= W - 3 || (x > 11 && x < W - 12)) && //
-                   (x != W - 4 || y < 3 || y > 11) &&   //
-                   (y != H - 4 || x < 3 || x > 11))
-                  grid[y * W + x] = QR_TAG_SET | (random () & 1 ? QR_TAG_BLACK : 0);
+            if (((x < quiet || x >= W - quiet) || (y < quiet || y >= H - quiet)) &&     //
+                (!truchet || (x && x < W - 1 && y && y < H - 1)) &&     //
+                (!circle || ((x * 2 - W) * (x * 2 - W) + (y * 2 - H) * (y * 2 - H) < W * H * 9 / 10)) &&        //
+                !((x == quiet - 1 && ((y >= quiet - 1 && y < quiet + 8) || (y >= H - quiet - 8 && y <= H - quiet))) ||  //
+                  (y == quiet - 1 && ((x >= quiet - 1 && x < quiet + 8) || (x >= W - quiet - 8 && x <= W - quiet))) ||  //
+                  (x == W - quiet && y >= quiet - 1 && y < quiet + 8) ||        //
+                  (y == H - quiet && x >= quiet - 1 && x < quiet + 8)   //
+                ))
+               grid[y * W + x] = QR_TAG_SET | (random () & 1 ? QR_TAG_BLACK : 0);
    // output
    if (tolower (*format) != 'i' && (!grid || !W))
       errx (1, "No barcode produced\n");
@@ -718,9 +730,9 @@ main (int argc, const char *argv[])
                int dot (int x, int y)
                {                // Where we can place an overlay dot
                   return ((grid[y * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                     ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                     ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET) ||
-                     ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET);
+                     (x > 0 && y > 0 && ((grid[(y - 1) * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET))
+                     || (y > 0 && ((grid[(y - 1) * W + x] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET))
+                     || (x > 0 && ((grid[y * W + (x - 1)] & (QR_TAG_SET | QR_TAG_TARGET | QR_TAG_ALIGN)) == QR_TAG_SET));
                }
                // Black
                fprintf (o, "<g>");

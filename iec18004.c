@@ -300,6 +300,8 @@ qr_encode_opts (
       *o.eclp = 0;
    if (o.padlenp)
       *o.padlenp = 0;
+   if (!o.noquiet && !o.quiet)
+      o.quiet = 4;              // default 4 unit quiet
    int ecl = 0;
    if (o.ecl)
    {
@@ -451,7 +453,7 @@ qr_encode_opts (
       free (mode);
       return NULL;
    }
-   while (versize (o.ver) + (o.noquiet ? 0 : 8) < o.minsize && o.ver < 40)
+   while (versize (o.ver) + o.noquiet * 2 < o.minsize && o.ver < 40)
       o.ver++;
    if (!o.ecl && !o.padlenp && !o.padlen && !o.pad)
    {                            // Can we do better ECL in same size?
@@ -689,7 +691,7 @@ qr_encode_opts (
    fprintf (stderr, "\n");
 #endif
    int w = versize (o.ver);
-   int q = (o.noquiet ? 0 : 4); // Quiet
+   int q = o.quiet;             // Quiet
    ui8 *grid = malloc ((w + q + q) * (w + q + q));
    if (!grid)
       return NULL;
