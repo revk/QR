@@ -214,7 +214,7 @@ main (int argc, const char *argv[])
       {"up", 0, POPT_ARG_VAL, &rotate, 0, "Rotate 0"},
       {"min-size", 0, POPT_ARG_INT, &minsize, 0, "Min size", "N"},
       {"round", 0, POPT_ARG_NONE, &round, 0, "Non standard round (svg)"},
-      {"circle", 0, POPT_ARG_NONE, &circle, 0, "Non standard padded to circle"},
+      {"circle", 0, POPT_ARG_NONE, &circle, 0, "Force --bad-quiet and --quiet to allow a circle around QR"},
       {"diamond", 0, POPT_ARG_NONE, &diamond, 0, "45 degree diamond format (svg)"},
       {"truchet", 0, POPT_ARG_NONE, &truchet, 0,
        "Non standard Truchet (svg) - thanks to https://mathstodon.xyz/@divbyzero for the idea"},
