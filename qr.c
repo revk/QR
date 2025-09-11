@@ -704,7 +704,7 @@ main (int argc, const char *argv[])
          if (!isupper (*format))
          {
             int Q = W * S;
-            if ((diamond || circle) && (Q & 1))
+            if (circle && (W & 1))
                Q += S;
             int Z = Q;
             if (diamond && !circle)
