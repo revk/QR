@@ -701,19 +701,25 @@ main (int argc, const char *argv[])
                   ImagePixel (i, x, y) = 1;
          if (!isupper (*format))
          {
-            fprintf (o, "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" ");
+            int Q = W * S;
+            if ((diamond || circle) && (W & 1))
+               Q += S;
+            int Z = Q;
+            if (diamond && !circle)
+               Z = Q * 1.4142 + 1;
+            fprintf (o,
+                     "<svg xmlns:svg=\"http://www.w3.org/2000/svg\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.0\" width=\"%d\" height=\"%d\">",
+                     Z, Z);
             if (diamond)
             {
-               int Q = W * S * 1.4142 + 1;
-               if (Q & 1)
-                  Q++;
-               int O = (Q - W * S) / 2;
-               fprintf (o,
-                        "width=\"%d\" height=\"%d\"><g transform=\"rotate(45,%d,%d)translate(%d,%d)\"><rect width=\"%d\" height=\"%d\" fill=\"white\"/>",
-                        Q, Q, Q / 2, Q / 2, O, O, W * S, H * S);
+               int O = (Z - Q) / 2;
+               printf ("<g transform=\"rotate(45,%d,%d)translate(%d,%d)\">", Z / 2, Z / 2, O, O);
             } else
-               fprintf (o, "width=\"%d\" height=\"%d\"><g><rect width=\"%d\" height=\"%d\" fill=\"white\"/>", W * S, H * S, W * S,
-                        H * S);
+               printf ("<g>");
+            if (circle)
+               printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%d\" fill=\"white\"/>", Q / 2, Q / 2, Q / 2);
+            else
+               printf ("<rect width=\"%d\" height=\"%d\" fill=\"white\"/>", Q, Q);
             fprintf (o, "<g fill=\"black\" stroke=\"none\"><path d=\"");
          }
          ImageSVGPath (i, o, 1);
