@@ -713,13 +713,13 @@ main (int argc, const char *argv[])
             if (diamond)
             {
                int O = (Z - Q) / 2;
-               printf ("<g transform=\"rotate(45,%d,%d)translate(%d,%d)\">", Z / 2, Z / 2, O, O);
+               fprintf (o, "<g transform=\"rotate(45,%d,%d)translate(%d,%d)\">", Z / 2, Z / 2, O, O);
             } else
-               printf ("<g>");
+               fprintf (o, "<g>");
             if (circle)
-               printf ("<circle cx=\"%d\" cy=\"%d\" r=\"%d\" fill=\"white\"/>", Q / 2, Q / 2, Q / 2);
+               fprintf (o, "<circle cx=\"%d\" cy=\"%d\" r=\"%d\" fill=\"white\"/>", Q / 2, Q / 2, Q / 2);
             else
-               printf ("<rect width=\"%d\" height=\"%d\" fill=\"white\"/>", Q, Q);
+               fprintf (o, "<rect width=\"%d\" height=\"%d\" fill=\"white\"/>", Q, Q);
             fprintf (o, "<g fill=\"black\" stroke=\"none\"><path d=\"");
          }
          ImageSVGPath (i, o, 1);
