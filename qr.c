@@ -282,7 +282,7 @@ main (int argc, const char *argv[])
       errx (1, "--truchet does not work with --no-quiet");
    if (round && truchet)
       errx (1, "Can't --round and --truchet");
-   if (badquiet && noquiet)
+   if (badquiet && noquiet && !circle)
       errx (1, "--bad-quiet does not work with --no-quiet");
    if (!quiet && !noquiet)
       quiet = 4;
@@ -338,8 +338,8 @@ main (int argc, const char *argv[])
    unsigned int score = 0;
    if (circle)
    {
-    grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, quiet: quiet, noquiet: noquiet, minsize: minsize, rotate: rotate, scorep:&score);
-      quiet = W * 0.4142;
+    grid = qr_encode (barcodelen, barcode, newver, newecl, newmask, modestr, &W, eci: eci, fnc1: fnc1, ai: ai, sam: sam, san: san, parity: parity, noquiet: 1, minsize: minsize, rotate: rotate, scorep:&score);
+      quiet += W * 0.4142 / 2 + 1;
    }
    if (overlay)
    {                            // Overlay in padding
